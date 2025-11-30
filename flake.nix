@@ -1,30 +1,54 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
   outputs =
-    { nixpkgs, ... }:
-    let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
+    inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" ];
+      perSystem =
+        { pkgs, ... }:
+        {
+          devShells.default = pkgs.mkShell {
+            buildInputs = with pkgs; [
+              (python3.withPackages (
+                ps: with ps; [
+                  pip
+                  angr
+                  pwntools
+                  pycryptodome
+                  z3-solver
+                  requests
+                  pillow
+                  opencv4
+                  evtx
+                  lxml
+                  fickling
+                  tqdm
+                ]
+              ))
 
-      ctf-packages = with pkgs; [
-        python3
-        gdb
-      ];
-
-      python-ctf = pkgs.python3.withPackages (p: [
-        p.angr
-        p.pwntools
-        p.pycryptodome
-        p.z3-solver
-        p.pip
-      ]);
-    in
-    {
-      devShells.${system}.default = pkgs.mkShell {
-        buildInputs = ctf-packages ++ [ python-ctf ];
-      };
+              radare2
+              binwalk
+              john
+              hashcat
+              nmap
+              wireshark
+              wget
+              xxd
+              unzip
+              sleuthkit
+              yara
+              cmake
+              gnumake
+              llvm
+              gdb
+              libseccomp
+              pwntools
+            ];
+          };
+        };
     };
 }
